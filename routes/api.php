@@ -39,7 +39,7 @@ Route::group([
 
         Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('me', [AuthController::class, 'me']);
-            Route::get('logout', [AuthController::class, 'logout']);
+            Route::post('logout', [AuthController::class, 'logout']);
             Route::post('allogout', [AuthController::class, 'logoutAll']);
         });
     });

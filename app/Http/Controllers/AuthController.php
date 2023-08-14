@@ -70,12 +70,10 @@ class AuthController extends Controller
 
         //Send failed response if request is not valid
         if ($validator->fails()) {
-            return response()->json([
-                'status'    => 'error',
-                'success'   => false,
-                'message'   => 'Bad request. Please try again',
+            return $this->responseError([
                 'error'     => $validator->errors()->toArray()
-            ], Response::HTTP_BAD_REQUEST);
+            ], 'Bad request. Please try again', Response::HTTP_BAD_REQUEST);
+
         }
 
         //Request is valid, create new user
@@ -87,11 +85,8 @@ class AuthController extends Controller
         ]);
 
         //User created, return success response
-        return response()->json([
-            'success' => true,
-            'message' => 'User created successfully',
-            'data' => $user
-        ], Response::HTTP_OK);
+        return $this->responseSuccess($data, 'User created successfully');
+
     }
 
     /**
@@ -137,14 +132,13 @@ class AuthController extends Controller
 
         //Send failed response if request is not valid
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->messages()], Response::HTTP_BAD_REQUEST);
+            return $this->responseError($validator->messages(), $validator->messages(), Response::HTTP_BAD_REQUEST);
         }
 
-        // dd($credentials); exit;
         $access_token = auth()->claims(['xtype' => 'auth'])->attempt($credentials);
 
         if (!$access_token) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+            return $this->responseError([], 'Unauthorized!');
         }
 
         //Create token
@@ -166,15 +160,11 @@ class AuthController extends Controller
         try {
             $token = $request->bearerToken();
             $user = JWTAuth::authenticate($token);
-            return response()->json([
-                'success' => true,
-                'data' => $user
-            ]);
+            
+            return $this->responseSuccess($user, 'Successfully logged out');
+
         } catch (JWTException $exception) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Sorry, user cannot be found'
-            ], Response::HTTP_NOT_FOUND);
+            return $this->responseError([], 'Sorry, user cannot be found', Response::HTTP_NOT_FOUND);
         }
     }
 
@@ -187,7 +177,7 @@ class AuthController extends Controller
         ]);
 
         if ($validate->fails()) {
-            return response()->json(['message' => 'Error! Bad input.'], 400);
+            return $this->responseError([], 'Error! Bad input.', 400);
         }
 
         $resource_token = auth()->claims([
@@ -209,7 +199,7 @@ class AuthController extends Controller
             'ip' => null,
             'device' => null
         ]);
-        return response()->json(['token' => $resource_token]);
+        return $this->responseSuccess(['token' => $resource_token], 'Error! Bad input.', 400);
     }
 
     /**
@@ -223,7 +213,7 @@ class AuthController extends Controller
         auth()->logout();
         auth()->setToken($refresh_token_obj->value)->logout();
 
-        return response()->json(['message' => 'Successfully logged out']);
+        return $this->responseSuccess([], 'Successfully logged out');
     }
 
     public function logoutAll(Request $request)
@@ -236,7 +226,8 @@ class AuthController extends Controller
             }
         }
 
-        return response()->json(['message' => 'Successfully logged out from all devices']);
+        return $this->responseSuccess([], 'Successfully logged out from all devices');
+
     }
 
     /**
@@ -249,7 +240,8 @@ class AuthController extends Controller
         $access_token = auth()->claims(['xtype' => 'auth'])->refresh(true, true);
         auth()->setToken($access_token);
 
-        return response()->json($this->getAccessTokenFormatted($access_token));
+        return $this->responseSuccess($this->getAccessTokenFormatted($access_token), 'Token Refresh Successfully');
+
     }
 
 
